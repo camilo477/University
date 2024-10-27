@@ -2,24 +2,26 @@ import React, { useState } from 'react';
 import './Formulario.css'; 
 
 const EnvioDatos = () => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [professor, setProfessor] = useState('');
-  const [schedule, setSchedule] = useState('');
+  const [idEstudiante, setIdEstudiante] = useState('');
+  const [nombreEstudiante, setNombreEstudiante] = useState('');
+  const [nombreMateria, setNombreMateria] = useState('');
+  const [descripcionMateria, setDescripcionMateria] = useState('');
+  const [nombreProfesor, setNombreProfesor] = useState('');
   const [response, setResponse] = useState(null);
 
   const postData = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/courses/", {
+      const res = await fetch("http://127.0.0.1:8000/api/create/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
-          description,
-          professor,
-          schedule,
+          id_estudiante: parseInt(idEstudiante), 
+          nombre_estudiante: nombreEstudiante,
+          nombre_materia: nombreMateria,
+          descripcion_materia: descripcionMateria,
+          nombre_profesor: nombreProfesor,
         }),
       });
 
@@ -53,53 +55,65 @@ const EnvioDatos = () => {
         <div className="col-sm-6 col-md-5 form-section">
           <div className="login-wrapper">
             <h2 className="login-title">Inscribir Estudiante</h2>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label htmlFor="Nombre" className="sr-only">Nombre</label>
+                <label htmlFor="idEstudiante" className="sr-only">ID Estudiante</label>
                 <input
                   type="text"
-                  name="Nombre"
-                  id="Nombre"
+                  name="idEstudiante"
+                  id="idEstudiante"
                   className="form-control"
-                  placeholder="Nombre"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  placeholder="ID Estudiante"
+                  value={idEstudiante}
+                  onChange={(e) => setIdEstudiante(e.target.value)}
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="Descripcion" className="sr-only">Descripción</label>
+                <label htmlFor="nombreEstudiante" className="sr-only">Nombre Estudiante</label>
                 <input
                   type="text"
-                  name="Descripcion"
-                  id="Descripcion"
+                  name="nombreEstudiante"
+                  id="nombreEstudiante"
                   className="form-control"
-                  placeholder="Descripcion"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Nombre Estudiante"
+                  value={nombreEstudiante}
+                  onChange={(e) => setNombreEstudiante(e.target.value)}
                 />
               </div>
-              <div className="form-group mb-3">
-                <label htmlFor="Profesor" className="sr-only">Profesor</label>
+              <div className="form-group">
+                <label htmlFor="nombreMateria" className="sr-only">Nombre Materia</label>
                 <input
                   type="text"
-                  name="Profesor"
-                  id="Profesor"
+                  name="nombreMateria"
+                  id="nombreMateria"
                   className="form-control"
-                  placeholder="Profesor"
-                  value={professor}
-                  onChange={(e) => setProfessor(e.target.value)}
+                  placeholder="Nombre Materia"
+                  value={nombreMateria}
+                  onChange={(e) => setNombreMateria(e.target.value)}
                 />
               </div>
-              <div className="form-group mb-3">
-                <label htmlFor="horario" className="sr-only">Horario</label>
+              <div className="form-group">
+                <label htmlFor="descripcionMateria" className="sr-only">Descripción Materia</label>
                 <input
                   type="text"
-                  name="horario"
-                  id="horario"
+                  name="descripcionMateria"
+                  id="descripcionMateria"
                   className="form-control"
-                  placeholder="Horario"
-                  value={schedule}
-                  onChange={(e) => setSchedule(e.target.value)}
+                  placeholder="Descripción Materia"
+                  value={descripcionMateria}
+                  onChange={(e) => setDescripcionMateria(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="nombreProfesor" className="sr-only">Nombre Profesor</label>
+                <input
+                  type="text"
+                  name="nombreProfesor"
+                  id="nombreProfesor"
+                  className="form-control"
+                  placeholder="Nombre Profesor"
+                  value={nombreProfesor}
+                  onChange={(e) => setNombreProfesor(e.target.value)}
                 />
               </div>
               <div id="boton" className="d-flex justify-content-between align-items-center mb-5">
@@ -107,12 +121,11 @@ const EnvioDatos = () => {
                   name="login"
                   id="login"
                   className="btn login-btn"
-                  type="button"
+                  type="submit"
                   value="Inscribir"
-                  onClick={postData}
                 />
               </div>
-            </form>           
+            </form>
           </div>
         </div>
       </div>
