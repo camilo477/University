@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+import os
+from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -74,23 +76,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'university.wsgi.application'
 
+load_dotenv()
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',  
-        'NAME': 'railway',      
-        'USER': 'postgres',                      
-        'PASSWORD': 'WOqyDNioFFqYKvVrrqObkpwHlPJJBodz',               
-        'HOST': 'junction.proxy.rlwy.net',                       
-        'PORT': '55835',                           
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'mydatabase',
     }
 }
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
