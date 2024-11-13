@@ -1,14 +1,16 @@
-import logo from './logo.svg';
-import './App.css';
 import React from 'react';
-import EnvioDatos from './envioDatos'; 
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import AssignmentForm from './AssignmentForm';
 
-const App = () => {
+function App() {
   return (
-    <div>
-      <EnvioDatos />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<div>Bienvenido a la aplicación</div>} />
+        <Route path="/asignar-materias" element={<AssignmentForm />} />
+      </Routes>
+    </Router>
   );
-};
+}
 
 export default App;

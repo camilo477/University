@@ -10,6 +10,22 @@ key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 @api_view(['GET'])
+def get_alumno_by_id(request):
+    try:
+        alumno_id = request.GET.get('id')  # Obtener el ID del alumno desde los parámetros GET
+        if not alumno_id:
+            return Response({"error": "ID del alumno es requerido"}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = supabase.table("alumno").select("*").eq("id_alumno", alumno_id).execute()
+
+        if response.data:
+            return Response(response.data[0], status=status.HTTP_200_OK)  # Devolver solo el primer registro
+        else:
+            return Response({"error": "Alumno no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
 def test_view(request):
     """Endpoint de prueba para verificar que el API está funcionando."""
     return Response({"message": "Test successful"}, status=status.HTTP_200_OK)
@@ -34,7 +50,7 @@ def create_course_registration(request):
 
 @api_view(['GET'])
 def get_asignaturas(request):
-    """Obtiene todas las asignaturas de la base de datos."""
+    
     try:
         response = supabase.table("asignatura").select("*").execute()
 
@@ -53,7 +69,8 @@ def get_asignatura_by_nombre(request):
         return Response({"error": "Nombre de asignatura no proporcionado"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        asignatura_response = supabase.table("asignatura").select("id_asignatura").eq("nombre", nombre_asignatura).execute()
+        asignatura_response = supabase.table("asignatura").select("id_asignatura").ilike("nombre", nombre_asignatura).execute()
+
         
         if asignatura_response.data:
             id_asignatura = asignatura_response.data[0]['id_asignatura']
@@ -93,6 +110,7 @@ def registrar_inscripcion(request):
         return Response({"error": "Todos los campos son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
+        # Inserta en la tabla 'horario_estudiante'
         response_horario_estudiante = supabase.table("horario_estudiante").insert({
             "id_alumno": id_alumno,
             "id_asignatura": id_asignatura,
@@ -101,26 +119,23 @@ def registrar_inscripcion(request):
             "hora_inicio": hora_inicio,
             "hora_fin": hora_fin
         }).execute()
-        print(id_alumno)
-        print(id_asignatura)
-        print(id_docente)
-        print(dia)
-        print(hora_inicio)
-        print(hora_fin)
-        fecha_inscripcion = datetime.now().date()
-        print("sadas")
-        response_inscripcion = supabase.table("Inscripcion").insert({
-            "fecha_inscripcion": fecha_inscripcion.isoformat(),
+        
+        # Obtiene la fecha actual y la convierte a cadena
+        fecha_inscripcion = datetime.now().date().isoformat()
+
+        # Inserta en la tabla 'Inscripcion'
+        response_inscripcion = supabase.table("inscripcion").insert({
+            "fecha_inscripcion": fecha_inscripcion,
             "id_asignatura": id_asignatura,
             "id_alumno": id_alumno,
-            "id_administrativo": 1 
+            "id_administrativo": 1  # Valor fijo
         }).execute()
 
         return Response({
-            "inscripcion": response_inscripcion.data,
-            "horario_estudiante": response_horario_estudiante.data
+            "horario_estudiante": response_horario_estudiante.data,
+            "inscripcion": response_inscripcion.data
         }, status=status.HTTP_201_CREATED)
 
     except Exception as joce:
-        print("saasddsa")
+        print(joce)
         return Response({"error": str(joce)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,176 +1,201 @@
-body {
-    background-color: #fff;
-    font-family: 'Karla', sans-serif; }
-    
-  h1 > a {
-      text-decoration:none;
-      color:#fff !important;
-  }
-  
-  .intro-section {
-    background-image: url(https://i.ibb.co/t2tbbh6/pexels-luis-quintero-2471234.jpg);
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    padding: 75px 95px;
-    min-height: 100vh;
-    display: -webkit-box;
-    display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-            flex-direction: column;
-    color: #ffffff; }
-    @media (max-width: 991px) {
-      .intro-section {
-        padding-left: 50px;
-        padding-rigth: 50px; } }
-    @media (max-width: 767px) {
-      .intro-section {
-        padding: 28px; } }
-    @media (max-width: 575px) {
-      .intro-section {
-        min-height: auto; } }
-  
-  .brand-wrapper .logo {
-    height: 35px; }
-  
-  @media (max-width: 767px) {
-    .brand-wrapper {
-      margin-bottom: 35px; } }
-  
-  .intro-content-wrapper {
-    width: 410px;
-    max-width: 100%;
-    margin-top: auto;
-    margin-bottom: auto; }
-    .intro-content-wrapper .intro-title {
-      font-size: 40px;
-      font-weight: bold;
-      margin-bottom: 17px; }
-    .intro-content-wrapper .intro-text {
-      font-size: 19px;
-      line-height: 1.37; }
-    .intro-content-wrapper .btn-read-more {
-      background-color: #fff;
-      padding: 13px 30px;
-      border-radius: 0;
-      font-size: 16px;
-      font-weight: bold;
-      color: #000; }
-      .intro-content-wrapper .btn-read-more:hover {
-        background-color: transparent;
-        border: 1px solid #fff;
-        color: #fff; }
-  
-  @media (max-width: 767px) {
-    .intro-section-footer {
-      margin-top: 35px; } }
-  
-  .intro-section-footer .footer-nav a {
-    font-size: 20px;
-    font-weight: bold;
-    color: inherit; }
-    @media (max-width: 767px) {
-      .intro-section-footer .footer-nav a {
-        font-size: 14px; } }
-    .intro-section-footer .footer-nav a + a {
-      margin-left: 30px; }
-  
-  .form-section {
-    display: -webkit-box;
-    display: flex;
-    -webkit-box-align: center;
-            align-items: center;
-    -webkit-box-pack: center;
-            justify-content: center; }
-    @media (max-width: 767px) {
-      .form-section {
-        padding: 35px; } }
-  
-  .login-wrapper {
-    width: 300px;
-    max-width: 100%; }
-    @media (max-width: 575px) {
-      .login-wrapper {
-        width: 100%; } }
-    .login-wrapper .form-control {
-      border: 0;
-      border-bottom: 1px solid #e7e7e7;
-      border-radius: 0;
-      font-size: 14px;
-      font-weight: bold;
-      padding: 15px 10px;
-      margin-bottom: 7px; }
-      .login-wrapper .form-control::-webkit-input-placeholder {
-        color: #b0adad; }
-      .login-wrapper .form-control::-moz-placeholder {
-        color: #b0adad; }
-      .login-wrapper .form-control:-ms-input-placeholder {
-        color: #b0adad; }
-      .login-wrapper .form-control::-ms-input-placeholder {
-        color: #b0adad; }
-      .login-wrapper .form-control::placeholder {
-        color: #b0adad; }
-  
-  .login-title {
-    font-size: 30px;
-    font-weight: bold;
-    margin-bottom: 30px; }
-
-#boton{
-    position: absolute;
-    right: 300px;
+.container {
+  position: relative;
+  display: flex;
+  gap: 20px;
+  width: 100%;
 }
 
-  .login-btn {
-    padding: 13px 30px;
-    background-color: #000;
-    border-radius: 0;
-    font-size: 20px;
-    font-weight: bold;
-    color: #fff; }
-    .login-btn:hover {
-      border: 1px solid #000;
-      background-color: transparent;
-      color: #000; }
-  
-  .forgot-password-link {
-    font-size: 14px;
-    color: #080808;
-    text-decoration: underline; }
-  
-  .social-login-title {
-    font-size: 15px;
-    color: #919aa3;
-    display: -webkit-box;
-    display: flex;
-    margin-bottom: 23px; }
-    .social-login-title::before, .social-login-title::after {
-      content: "";
-      background-image: -webkit-gradient(linear, left top, left bottom, from(#f4f4f4), to(#f4f4f4));
-      background-image: linear-gradient(#f4f4f4, #f4f4f4);
-      -webkit-box-flex: 1;
-              flex-grow: 1;
-      background-size: calc(100% - 20px) 1px;
-      background-repeat: no-repeat; }
-    .social-login-title::before {
-      background-position: center left; }
-    .social-login-title::after {
-      background-position: center right; }
-  
-  .social-login-links {
-    text-align: center;
-    margin-bottom: 32px; }
-  
-  .social-login-link img {
-    width: 40px;
-    height: 40px;
-    -o-object-fit: contain;
-       object-fit: contain; }
-  
-  .social-login-link + .socia-login-link {
-    margin-left: 16px; }
-  
-  .login-wrapper-footer-text {
-    font-size: 14px;
-    text-align: center; }
+.schedule {
+  position: absolute;
+  top: 50px;
+  left: -315px; 
+  flex-grow: 2;
+  min-width: 600px; /* Reducido el tamaño mínimo */
+  max-width: 900px; /* Reducido el tamaño máximo */
+  width: 100%; 
+  border-collapse: collapse;
+}
+
+.schedule th, .schedule td {
+  border: 1px solid #000;
+  padding: 8px;  /* Reducido el padding */
+  text-align: center;
+  font-size: 14px; /* Reducido el tamaño de la fuente */
+}
+
+.imagen img {
+  position: absolute;
+  left: -400px;
+  top: 800px;
+  width: 2030px; 
+  height: 81px;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -webkit-appearance: none;  
+  -moz-appearance: textfield; 
+  appearance: none;          
+  margin: 0;                 
+}
+
+input[type="checkbox"] {
+  -webkit-appearance: none;  
+  -moz-appearance: none;    
+  appearance: none;        
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ccc;    
+  background-color: #fff;    
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #000; 
+  border-color: #000;     
+}
+
+input[type="checkbox"]:checked::before {
+  content: '✔';            
+  position: absolute;
+  top: 0.5px;
+  left: 4.9px;
+  color: white;           
+  font-size: 12px;          
+}
+
+.check {
+  position: absolute;
+  top: 306px;
+  left: 650px;
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+}
+
+.form-container {
+  position: absolute;
+  top: 48px;
+  left: 780px;
+  flex-shrink: 0;
+  width: 500px;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h2 {
+  margin-top: 0;
+}
+
+.form-container input[type="text"], 
+.form-container input[type="number"], 
+.form-container textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form-container button {
+  width: 100%;
+  padding: 10px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.form-container button:hover {
+  background-color: #555;
+}
+
+.notification {
+  position: absolute;
+  top: 735px;
+  left: -318px;
+  background-color: #ffffff;
+  border: 1px solid #e2e0e0;
+  padding: 10px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); 
+}
+
+.notification span {
+  margin-right: 20px;
+  font-weight: bold;
+}
+
+.notification button {
+  background-color: #000; 
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.notification button:hover {
+  background-color: #333;
+}
+
+.asignatura-cuadro {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-bottom: 15px; /* Añadido margen inferior para separar del botón */
+  padding: 5px 15px;
+  border: 1px solid #ccc;
+  background-color: #e9f7ef;
+  border-radius: 5px;
+  font-size: 12px;
+  max-width: 450px;
+  width: 100%;
+  word-wrap: break-word;
+}
+
+.asignatura-cuadro .datos {
+  flex: 1;
+}
+
+.asignatura-cuadro .horario {
+  width: 100px;
+  text-align: right;
+}
+
+.asignatura-cuadro h3 {
+  font-size: 13px;
+  margin: 0 0 3px 0;
+}
+
+.asignatura-cuadro p {
+  font-size: 11px;
+  margin: 2px 0;
+}
+
+.asignatura-cuadro ul {
+  padding: 0;
+  margin: 5px 0 0 0;
+}
+
+.asignatura-cuadro li {
+  font-size: 10px;
+  list-style-type: none;
+  margin-bottom: 3px;
+}
+.clickable {
+  cursor: pointer;
+}
