@@ -12,14 +12,14 @@ supabase: Client = create_client(url, key)
 @api_view(['GET'])
 def get_alumno_by_id(request):
     try:
-        alumno_id = request.GET.get('id')  # Obtener el ID del alumno desde los parámetros GET
+        alumno_id = request.GET.get('id')  
         if not alumno_id:
             return Response({"error": "ID del alumno es requerido"}, status=status.HTTP_400_BAD_REQUEST)
 
         response = supabase.table("alumno").select("*").eq("id_alumno", alumno_id).execute()
 
         if response.data:
-            return Response(response.data[0], status=status.HTTP_200_OK)  # Devolver solo el primer registro
+            return Response(response.data[0], status=status.HTTP_200_OK)  
         else:
             return Response({"error": "Alumno no encontrado"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
@@ -97,45 +97,51 @@ def get_asignatura_by_nombre(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
 @api_view(['POST'])
 def registrar_inscripcion(request):
     id_alumno = request.data.get('id_alumno')
-    id_asignatura = request.data.get('id_asignatura')
-    id_docente = request.data.get('id_docente')
-    dia = request.data.get('dia')
-    hora_inicio = request.data.get('hora_inicio')
-    hora_fin = request.data.get('hora_fin')
+    asignaturas = request.data.get('asignaturas')  
 
-    if not all([id_alumno, id_asignatura, dia, hora_inicio, hora_fin, id_docente]):
-        return Response({"error": "Todos los campos son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
+    if not id_alumno or not asignaturas:
+        return Response({"error": "ID del alumno y asignaturas son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # Inserta en la tabla 'horario_estudiante'
-        response_horario_estudiante = supabase.table("horario_estudiante").insert({
-            "id_alumno": id_alumno,
-            "id_asignatura": id_asignatura,
-            "id_docente": id_docente,
-            "dia": dia,
-            "hora_inicio": hora_inicio,
-            "hora_fin": hora_fin
-        }).execute()
-        
-        # Obtiene la fecha actual y la convierte a cadena
         fecha_inscripcion = datetime.now().date().isoformat()
+        inscripciones = []
 
-        # Inserta en la tabla 'Inscripcion'
-        response_inscripcion = supabase.table("inscripcion").insert({
-            "fecha_inscripcion": fecha_inscripcion,
-            "id_asignatura": id_asignatura,
-            "id_alumno": id_alumno,
-            "id_administrativo": 1  # Valor fijo
-        }).execute()
+        for asignatura in asignaturas:
+            id_asignatura = asignatura['id_asignatura']
+            
+            response_inscripcion = supabase.table("inscripcion").insert({
+                "fecha_inscripcion": fecha_inscripcion,
+                "id_asignatura": id_asignatura,
+                "id_alumno": id_alumno,
+                "id_administrativo": 1  
+            }).execute()
 
+            if not response_inscripcion.data:
+                raise Exception(f"Error al registrar la inscripción: {response_inscripcion.error}")
+            
+            inscripciones.append(response_inscripcion.data)
+
+            for horario in asignatura['horarios']:
+                response_horario_estudiante = supabase.table("horario_estudiante").insert({
+                    "id_alumno": id_alumno,
+                    "id_asignatura": id_asignatura,
+                    "id_docente": asignatura['id_docente'],  
+                    "dia": horario['dia'],
+                    "hora_inicio": horario['hora_inicio'],
+                    "hora_fin": horario['hora_fin']
+                }).execute()
+
+                if not response_horario_estudiante.data:
+                    raise Exception(f"Error al registrar el horario: {response_horario_estudiante.error}")
+                
         return Response({
-            "horario_estudiante": response_horario_estudiante.data,
-            "inscripcion": response_inscripcion.data
+            "inscripciones": inscripciones,
+            "mensaje": "Inscripción y horarios registrados correctamente"
         }, status=status.HTTP_201_CREATED)
 
-    except Exception as joce:
-        print(joce)
-        return Response({"error": str(joce)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
