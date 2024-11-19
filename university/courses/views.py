@@ -5,6 +5,7 @@ from rest_framework import status
 from supabase import create_client, Client
 from django.http import JsonResponse
 from datetime import datetime
+from django.db import connection
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
@@ -96,52 +97,50 @@ def get_asignatura_by_nombre(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+    
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
+@api_view(['GET'])
+def estudianteId(request):
+    try:
+        id_alumno = request.query_params.get('id')
+        print(id_alumno)
+        response = supabase.rpc("get_student_schedule", {"p_id_alumno": id_alumno}).execute()
+        # Verificar si hay datos en la respuesta
+        if response.data is None:
+            return Response({"error": "No se encontraron datos para este alumno"}, status=404)
 
+        # Devolver los datos en formato JSON
+        return Response(response.data, status=200)
+    
+    
+    except Exception as e:
+        return Response({"error": "Ocurrió un error inesperado", "details": str(e)}, status=500)
+    
 @api_view(['POST'])
 def registrar_inscripcion(request):
     id_alumno = request.data.get('id_alumno')
-    asignaturas = request.data.get('asignaturas')  
+    id_asignatura = request.data.get('id_asignatura')
 
-    if not id_alumno or not asignaturas:
-        return Response({"error": "ID del alumno y asignaturas son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
+    if not id_alumno or not id_asignatura:
+        return Response({"error": "ID del estudiante y ID de la asignatura son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        fecha_inscripcion = datetime.now().date().isoformat()
-        inscripciones = []
+        # Llamar al RPC en Supabase
+        response_rpc = supabase.rpc('insertar_inscripcion', {
+            "p_id_alumno": id_alumno,
+            "p_id_asignatura": id_asignatura
+        }).execute()
 
-        for asignatura in asignaturas:
-            id_asignatura = asignatura['id_asignatura']
-            
-            response_inscripcion = supabase.table("inscripcion").insert({
-                "fecha_inscripcion": fecha_inscripcion,
-                "id_asignatura": id_asignatura,
-                "id_alumno": id_alumno,
-                "id_administrativo": 1  
-            }).execute()
+        # Verificar si la llamada fue exitosa
+        if response_rpc.data is None:
+            return Response({"error": "No se encontraron datos para este alumno"}, status=404)
 
-            if not response_inscripcion.data:
-                raise Exception(f"Error al registrar la inscripción: {response_inscripcion.error}")
-            
-            inscripciones.append(response_inscripcion.data)
-
-            for horario in asignatura['horarios']:
-                response_horario_estudiante = supabase.table("horario_estudiante").insert({
-                    "id_alumno": id_alumno,
-                    "id_asignatura": id_asignatura,
-                    "id_docente": asignatura['id_docente'],  
-                    "dia": horario['dia'],
-                    "hora_inicio": horario['hora_inicio'],
-                    "hora_fin": horario['hora_fin']
-                }).execute()
-
-                if not response_horario_estudiante.data:
-                    raise Exception(f"Error al registrar el horario: {response_horario_estudiante.error}")
-                
-        return Response({
-            "inscripciones": inscripciones,
-            "mensaje": "Inscripción y horarios registrados correctamente"
-        }, status=status.HTTP_201_CREATED)
-
+        # Devolver los datos en formato JSON
+        return Response({"OK": "Se registro correctamente"}, status=200)
+    
+    
+    
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Ocurrió un error inesperado", "details": str(e)}, status=500)

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect  } from 'react';
 import './Formulario.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import marcoantoniosolis from './images/marcoantoniosolis.png';
 
 const Horario = () => {
@@ -7,6 +8,7 @@ const Horario = () => {
   const [asignatura, setAsignatura] = useState('');
   const [numeroAsignatura, setNumeroAsignatura] = useState('');
   const [numeroEstudiante, setNumeroEstudiante] = useState('');
+  const [size, setSize] = useState(1);
   const [estudiante, setEstudiante] = useState('');
   const [asignaturaId, setAsignaturaId] = useState('');
   const [asignaturaNombre, setAsignaturaNombre] = useState('');
@@ -15,11 +17,125 @@ const Horario = () => {
   const [horarios, setHorarios] = useState([]);
   const [materiasRegistradas, setMateriasRegistradas] = useState([]);
   const [error, setError] = useState('');
+  const [exito, setExito] = useState('');
+  const [loading, setLoading] = useState(true);
   const [horarioColoreado, setHorarioColoreado] = useState([]);
   const [asignaturaSeleccionada, setAsignaturaSeleccionada] = useState('');
-  const [loadingAsignatura, setLoadingAsignatura] = useState(false); // Definir estado de carga de asignatura
+  const [loadingAsignatura, setLoadingAsignatura] = useState(false); 
   const [loadingEstudiante, setLoadingEstudiante] = useState(false);
   const [asignaturas, setAsignaturas] = useState([]);
+  const [alumno, setAlumno] = useState("");
+
+
+  const cerrarAnuncio = () => {
+    setExito(false); 
+  };
+
+  useEffect(() => {
+    getAsignaturas();
+    if (exito) {
+      const timer = setTimeout(() => {
+        setExito(false); 
+      }, 5000);
+      
+      
+      return () => clearTimeout(timer);
+    }
+  }, [exito]);
+
+  const handleSelection = (e) => {
+    setAsignatura(e.target.value); 
+    setSize(1); 
+    setTimeout(() => {
+      document.getElementById('asignatura').blur();
+    }, 0);
+  };
+
+  const getAsignaturas = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/asignaturas/');
+      if (!response.ok) {
+        throw new Error('Error al obtener las asignaturas');
+      }
+      const data = await response.json();
+      const asignaturasFiltradas = data.map(item => ({
+        id: item.id_asignatura,
+        nombre: item.nombre
+      }));
+      setAsignaturas(asignaturasFiltradas); 
+      setLoading(false); 
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    } 
+  };
+
+  const handleSearchEstudiante = async () => {
+    try {
+      const id = numeroEstudiante; 
+  
+      const response = await fetch(`http://127.0.0.1:8000/api/get_alumno_by_id/?id=${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.statusText}`);
+      }
+  
+      const result = await response.json();
+      if (result) {
+        const nombre = result.nombre + " " + result.apellido;
+        setAlumno(nombre); 
+      } else {
+        console.log("No se encontró al estudiante.");
+        setAlumno(null);
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+    }
+  };
+
+  const estudianteId = async () => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/estudianteId/?id=${numeroEstudiante}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result && result.length > 0) {
+        // Transformar los datos en un formato útil para colorear el horario
+        const nuevoHorario = result.map((item) => {
+          const horaInicio = parseInt(item.hora_inicio.split(":")[0]); // Extraer la hora de inicio
+          const horaFin = parseInt(item.hora_fin.split(":")[0]); // Extraer la hora de fin
+          return {
+            dia: item.dia, // Día de la semana
+            fila: horaInicio - 7, // Convertir la hora de inicio en índice de fila (basado en 7:00 como inicio)
+            color: "#4CAF50", // Color de fondo para la celda
+            nombre: item.asignatura, // Nombre de la asignatura
+          };
+        });
+        setHorarioColoreado(nuevoHorario);
+      } else {
+        console.log("No se encontró al estudiante.");
+        setHorarioColoreado([]); // Vaciar el horario si no hay datos
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+    }
+  };
 
   const handleEliminar = () => {
     const asignaturas = JSON.parse(localStorage.getItem('asignaturas')) || [];
@@ -34,51 +150,29 @@ const Horario = () => {
     }
   };
 
-  const handleSearchAsignatura = async () => {
-    setLoadingAsignatura(true);
+  const registrarHorario = async (e) => {
     try {
-      const asignaturaNormalizada = asignatura.toLowerCase();
-      const response = await fetch(`http://localhost:8000/api/get_asignatura_by_nombre/?nombre=${asignaturaNormalizada}`);
-
-      if (!response.ok) {
-        throw new Error('Error al buscar la asignatura');
-      }
-
-      const data = await response.json();
-      setAsignaturaId(data.id_asignatura);
-      setAsignaturaNombre(asignatura); 
-      const docente = data.docentes[0];
-      setDocenteNombre(docente ? `${docente.nombre} ${docente.apellido}` : 'No asignado');
-      setDocenteId(docente ? docente.id_docente : 'No disponible'); 
-      setHorarios(data.horarios);
-      setNumeroAsignatura(data.id_asignatura);
-    } catch (error) {
-      console.error('Error al buscar la asignatura:', error);
-      setError('No se pudo obtener la asignatura. Verifica el servidor.');
-    } finally {
-      setLoadingAsignatura(false);
-    }
-  };
+      const data = {
+        id_asignatura: asignatura,
+        id_alumno: numeroEstudiante
+      };
   
-
-
-  const handleSearchEstudiante = async () => {
-    setLoadingEstudiante(true);
-    try {
-      const response = await fetch(`http://localhost:8000/api/get_alumno_by_id/?id=${numeroEstudiante}`);
-
-      if (!response.ok) {
-        throw new Error('Error al buscar el estudiante');
+      const response = await fetch("http://127.0.0.1:8000/api/registrar_inscripcion/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+  
+      if (response.ok) {
+        setExito('Enviado con exito');
+        console.log("Datos enviados con éxito:", await response.json());
+      } else {
+        console.error("Error al enviar los datos:", response.status);
       }
-
-      const data = await response.json();
-      setEstudianteNombre(`${data.nombre} ${data.apellido}`);
-      setHorarioColoreado([]);
     } catch (error) {
-      console.error('Error al buscar el estudiante:', error);
-      setError('No se pudo obtener el estudiante. Verifica el servidor.');
-    } finally {
-      setLoadingEstudiante(false);
+      console.error("Error en la solicitud:", error);
     }
   };
 
@@ -138,7 +232,9 @@ const Horario = () => {
   
   return (
     <div className="container">
-      <table className="schedule">
+      <div>
+
+      <table className="schedule" border="1">
         <thead>
           <tr>
             <th></th>
@@ -153,9 +249,11 @@ const Horario = () => {
         <tbody>
           {[...Array(14)].map((_, i) => (
             <tr key={i}>
-              <td>{7 + i}-{8 + i}</td>
+              <td>
+                {7 + i}-{8 + i}
+              </td>
               {[...Array(6)].map((_, j) => {
-                const dia = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][j];
+                const dia = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][j];
                 const isColoreado = horarioColoreado.some(
                   (celda) => celda.fila === i && celda.dia === dia
                 );
@@ -163,20 +261,32 @@ const Horario = () => {
                   <td
                     key={j}
                     style={{
-                      backgroundColor: isColoreado ? horarioColoreado.find(celda => celda.fila === i && celda.dia === dia).color : '',
-                      color: isColoreado ? 'white' : '',
-                      cursor: isColoreado ? 'pointer' : 'default',
+                      backgroundColor: isColoreado
+                        ? horarioColoreado.find(
+                            (celda) => celda.fila === i && celda.dia === dia
+                          ).color
+                        : "",
+                      color: isColoreado ? "white" : "",
+                      cursor: isColoreado ? "pointer" : "default",
                     }}
                     onClick={() => {
                       if (isColoreado) {
                         const asignaturaSeleccionada = horarioColoreado.find(
                           (celda) => celda.fila === i && celda.dia === dia
                         );
-                        setAsignaturaSeleccionada(asignaturaSeleccionada ? asignaturaSeleccionada.nombre : '');
+                        alert(
+                          `Asignatura: ${asignaturaSeleccionada.nombre}\nDía: ${asignaturaSeleccionada.dia}\nHora: ${
+                            7 + asignaturaSeleccionada.fila
+                          }:00 - ${8 + asignaturaSeleccionada.fila}:00`
+                        );
                       }
                     }}
                   >
-                    {isColoreado ? horarioColoreado.find(celda => celda.fila === i && celda.dia === dia).nombre : ''}
+                    {isColoreado
+                      ? horarioColoreado.find(
+                          (celda) => celda.fila === i && celda.dia === dia
+                        ).nombre
+                      : ""}
                   </td>
                 );
               })}
@@ -184,6 +294,7 @@ const Horario = () => {
           ))}
         </tbody>
       </table>
+    </div>
 
 
       <div className="imagen">
@@ -191,91 +302,95 @@ const Horario = () => {
       </div>
 
       <div className="form-container">
-        <h2>Sistema de Gestión de Asignaturas</h2>
-        <form onSubmit={handleRegistro}>
-          <label htmlFor="asignatura">Asignatura</label>
-          <input
-            type="text"
-            id="asignatura"
-            value={asignatura}
-            onChange={(e) => setAsignatura(e.target.value)}
-          />
+  <h2>Sistema de Gestión de Asignaturas</h2>
+  <form onSubmit={handleRegistro}>
+    <label htmlFor="asignatura">Asignatura</label>
+    <select
+      className="form-select selectl"
+      id="asignatura"
+      value={asignatura}
+      size={size} // Controlamos dinámicamente el tamaño
+      onFocus={() => setSize(4)} // Cambiamos el tamaño al desplegar
+      onBlur={() => setSize(1)} // Restauramos el tamaño al cerrar
+      onChange={(e) => handleSelection(e)}
+    >
+      <option value="">Selecciona una asignatura</option>
+      {asignaturas.map((asignaturaItem) => (
+        <option key={asignaturaItem.id} value={asignaturaItem.id}>
+          {asignaturaItem.nombre}
+        </option>
+      ))}
+    </select>
 
-          <button type="button" onClick={handleSearchAsignatura}>
-            Buscar Asignatura
-          </button>
+    <label htmlFor="numero-asignatura">Número de asignatura:</label>
+      <input
+        type="text"
+        id="numero-asignatura"
+        value={asignatura || ""} 
+        readOnly 
+      />
 
-          <label htmlFor="numero-asignatura">Número de asignatura:</label>
-          <input
-            type="text"
-            id="numero-asignatura"
-            value={numeroAsignatura || ''}
-            readOnly
-          />
+    <label htmlFor="numero-estudiante">Número Estudiante</label>
+    <input
+      type="number"
+      id="numero-estudiante"
+      value={numeroEstudiante}
+      onChange={(e) => setNumeroEstudiante(e.target.value)}
+    />
 
-          <label htmlFor="numero-estudiante">Número Estudiante</label>
-          <input
-            type="number"
-            id="numero-estudiante"
-            value={numeroEstudiante}
-            onChange={(e) => setNumeroEstudiante(e.target.value)}
-          />
+    <button type="button" onClick={handleSearchEstudiante}>
+      Buscar Estudiante
+    </button>
 
-          <button type="button" onClick={handleSearchEstudiante}>
-            Buscar Estudiante
-          </button>
+    <label htmlFor="estudiante">Estudiante:</label>
+    <input
+      type="text"
+      id="estudiante"
+      value={alumno || ""}
+      readOnly
+    />
 
-          <label htmlFor="estudiante">Estudiante:</label>
-          <input
-            type="text"
-            id="estudiante"
-            value={estudianteNombre || estudiante}
-            readOnly
-          />
+    {asignaturaNombre && docenteNombre && (
+      <div className="asignatura-cuadro">
 
-          {asignaturaNombre && docenteNombre && (
-            <div className="asignatura-cuadro">
-
-              <p
-                className="clickable resaltado"
-                onClick={() => {
-                  if (estudianteNombre) {
-                    handleColorearHorario(horarios, asignaturaNombre);
-                  } else {
-                    setError('Por favor, ingrese un estudiante primero.');
-                  }
-                }}
-              >
-                {asignaturaNombre}
-              </p>
-
-
-
-              <p>
-                Docente: {docenteNombre}
-                
-              </p>
-
-              {horarios && horarios.length > 0 && (
-                <div>
-
-                  <p>Horarios:</p>
-                  <ul>
-                    {horarios.map((horario, index) => (
-                      <li key={index}>
-                        {horario.dia}: {horario.hora_inicio} - {horario.hora_fin}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+        <p
+          className="clickable resaltado"
+          onClick={() => {
+            if (estudianteNombre) {
+              handleColorearHorario(horarios, asignaturaNombre);
+            } else {
+              setError('Por favor, ingrese un estudiante primero.');
+            }
+          }}
+        >
+          {asignaturaNombre}
+        </p>
 
 
 
+        <p>
+          Docente: {docenteNombre}
+          
+        </p>
 
-          <button >Registrar Horarios</button>
+        {horarios && horarios.length > 0 && (
+          <div>
+
+            <p>Horarios:</p>
+            <ul>
+              {horarios.map((horario, index) => (
+                <li key={index}>
+                  {horario.dia}: {horario.hora_inicio} - {horario.hora_fin}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    )}
+
+          <button onClick={registrarHorario}>Registrar Asignatura</button>
+          <button onClick={estudianteId}>Actualizar Horario</button>
 
         </form>
       </div>
@@ -283,6 +398,15 @@ const Horario = () => {
       {error && (
         <div className="error">
           <span>{error}</span>
+        </div>
+      )}
+
+      {exito && (
+        <div className="exito">
+        ¡Ha sido registrada la inscripcion!
+        <span className="icono-x" onClick={cerrarAnuncio}>
+            X
+        </span>
         </div>
       )}
 
