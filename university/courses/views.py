@@ -10,6 +10,59 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
+@api_view(['DELETE'])
+def eliminar_inscripcion(request):
+    try:
+        asignatura_id = request.data.get('asignatura_id')
+        alumno_id = request.data.get('alumno_id')
+        
+        if not asignatura_id or not alumno_id:
+            return Response({"error": "ID de la asignatura y del alumno son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = supabase.table("inscripcion").delete().eq("id_asignatura", asignatura_id).eq("id_alumno", alumno_id).execute()
+
+        if response.data:
+            return Response({"message": "Inscripción eliminada correctamente"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "No se encontró la inscripción para eliminar"}, status=status.HTTP_404_NOT_FOUND)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def estudianteId(request):
+    try:
+        id_alumno = request.query_params.get('id')
+        print(id_alumno)
+        response = supabase.rpc("get_student_schedule", {"p_id_alumno": id_alumno}).execute()
+
+        if response.data is None:
+            return Response({"error": "No se encontraron datos para este alumno"}, status=404)
+
+        return Response(response.data, status=200)
+    
+    
+    except Exception as e:
+        return Response({"error": "Ocurrió un error inesperado", "details": str(e)}, status=500)
+
+@api_view(['GET'])
+def obtener_horario_idMateria(request):
+    try:
+        asignatura_id = request.query_params.get('asignatura_id')  
+        print(asignatura_id)
+        if not asignatura_id:
+            return Response({"error": "ID de la asignatura es requerida"}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = supabase.rpc("get_horario_asignatura", {"asignatura_id": asignatura_id}).execute()
+
+        if response.data:
+            return Response(response.data, status=status.HTTP_200_OK)  
+        else:
+            return Response({"error": "Asginatura no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 @api_view(['GET'])
 def get_alumno_by_id(request):
     try:
@@ -100,23 +153,6 @@ def get_asignatura_by_nombre(request):
     
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-
-@api_view(['GET'])
-def estudianteId(request):
-    try:
-        id_alumno = request.query_params.get('id')
-        print(id_alumno)
-        response = supabase.rpc("get_student_schedule", {"p_id_alumno": id_alumno}).execute()
-        # Verificar si hay datos en la respuesta
-        if response.data is None:
-            return Response({"error": "No se encontraron datos para este alumno"}, status=404)
-
-        # Devolver los datos en formato JSON
-        return Response(response.data, status=200)
-    
-    
-    except Exception as e:
-        return Response({"error": "Ocurrió un error inesperado", "details": str(e)}, status=500)
     
 @api_view(['POST'])
 def registrar_inscripcion(request):

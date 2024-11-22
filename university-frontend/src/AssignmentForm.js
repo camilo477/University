@@ -5,6 +5,7 @@ import marcoantoniosolis from './images/marcoantoniosolis.png';
 
 const Horario = () => {
   const [isChecked, setIsChecked] = useState(false);
+  const [AsignaturaParaEliminar, setAsignaturaParaEliminar] = useState('');
   const [asignatura, setAsignatura] = useState('');
   const [numeroAsignatura, setNumeroAsignatura] = useState('');
   const [numeroEstudiante, setNumeroEstudiante] = useState('');
@@ -25,23 +26,35 @@ const Horario = () => {
   const [loadingEstudiante, setLoadingEstudiante] = useState(false);
   const [asignaturas, setAsignaturas] = useState([]);
   const [alumno, setAlumno] = useState("");
+  const [horaInicioH, SethoraInicioH] = useState("");
+  const [horaFinH, SethoraFinH] = useState("");
+  const [nombreDocente, setNombreDocente] = useState("");
+  const [dia, setDia] = useState("");
+  const [nombreAsignatura, setNombreAsignatura] = useState("");
 
 
   const cerrarAnuncio = () => {
     setExito(false); 
+    setError(false);
   };
 
   useEffect(() => {
     getAsignaturas();
+  
     if (exito) {
-      const timer = setTimeout(() => {
-        setExito(false); 
-      }, 5000);
-      
-      
-      return () => clearTimeout(timer);
+      const timerExito = setTimeout(() => {
+        setExito(false);
+      }, 3000);
+      return () => clearTimeout(timerExito);
     }
-  }, [exito]);
+  
+    if (error) {
+      const timerError = setTimeout(() => {
+        setError(false);
+      }, 3000);
+      return () => clearTimeout(timerError);
+    }
+  }, [exito, error]);
 
   const handleSelection = (e) => {
     setAsignatura(e.target.value); 
@@ -50,6 +63,63 @@ const Horario = () => {
       document.getElementById('asignatura').blur();
     }, 0);
   };
+
+  const Eliminar = async (nombre) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/get_asignatura_by_nombre/?nombre=${nombre}`);
+
+      if (!response.ok) {
+        throw new Error('Error al obtener los horarios disponibles');
+      }
+  
+      const data = await response.json();
+
+    if (data && data.id_asignatura) {
+      const idAsignatura = data.id_asignatura;
+
+      setAsignaturaParaEliminar(idAsignatura);
+    } else {
+  console.log('Error');
+}
+    } catch (error) {
+      console.error('Error', error);
+    }
+  };
+
+  const getHorariosDisponibles = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/obtener_horario_idMateria/?asignatura_id=${asignatura}`);
+      
+      if (!response.ok) {
+        throw new Error('Error al obtener los horarios disponibles');
+      }
+  
+      const data = await response.json();
+  
+      if (data.length > 0) {
+        const { 
+          nombre_asignatura, 
+          nombre_docente, 
+          dia, 
+          hora_inicio, 
+          hora_fin 
+        } = data[0]; 
+
+        setNombreAsignatura(nombre_asignatura);
+        setNombreDocente(nombre_docente);
+        setDia(dia);
+        SethoraInicioH(hora_inicio);
+        SethoraFinH(hora_fin);
+
+      } else {
+        console.log('No hay horarios disponibles.');
+      }
+    } catch (error) {
+      console.error('Error al obtener los horarios:', error);
+    }
+  };
+  
+  
 
   const getAsignaturas = async () => {
     try {
@@ -97,7 +167,6 @@ const Horario = () => {
       console.error("Error en la solicitud:", error);
     }
   };
-
   const estudianteId = async () => {
     try {
       const response = await fetch(
@@ -109,45 +178,67 @@ const Horario = () => {
           },
         }
       );
-
+  
       if (!response.ok) {
         throw new Error(`Error en la solicitud: ${response.statusText}`);
       }
-
+  
       const result = await response.json();
+  
       if (result && result.length > 0) {
-        // Transformar los datos en un formato útil para colorear el horario
-        const nuevoHorario = result.map((item) => {
-          const horaInicio = parseInt(item.hora_inicio.split(":")[0]); // Extraer la hora de inicio
-          const horaFin = parseInt(item.hora_fin.split(":")[0]); // Extraer la hora de fin
-          return {
-            dia: item.dia, // Día de la semana
-            fila: horaInicio - 7, // Convertir la hora de inicio en índice de fila (basado en 7:00 como inicio)
-            color: "#4CAF50", // Color de fondo para la celda
-            nombre: item.asignatura, // Nombre de la asignatura
-          };
+        const nuevoHorario = result.flatMap((item) => {
+          const horaInicio = parseInt(item.hora_inicio.split(":")[0]); 
+          const horaFin = parseInt(item.hora_fin.split(":")[0]); 
+          const filas = []; 
+  
+         
+          for (let hora = horaInicio; hora < horaFin; hora++) {
+            filas.push({
+              dia: item.dia,
+              fila: hora - 7, 
+              color: "#4CAF50",
+              nombre: item.asignatura,
+            });
+          }
+  
+          return filas; 
         });
+  
         setHorarioColoreado(nuevoHorario);
       } else {
         console.log("No se encontró al estudiante.");
-        setHorarioColoreado([]); // Vaciar el horario si no hay datos
+        setHorarioColoreado([]);
       }
     } catch (error) {
       console.error("Error en la solicitud:", error);
     }
-  };
+  };  
 
-  const handleEliminar = () => {
-    const asignaturas = JSON.parse(localStorage.getItem('asignaturas')) || [];
-    const asignaturaActual = asignaturaSeleccionada; 
-    
-    if (asignaturaActual) {
-      const nuevasAsignaturas = asignaturas.filter(
-        asignatura => asignatura.id_asignatura !== asignaturaActual.id_asignatura
-      );
-      localStorage.setItem('asignaturas', JSON.stringify(nuevasAsignaturas));
-      setAsignaturaSeleccionada(null);
+  const handleEliminar = async (e) => {
+    try {
+      const data = {
+        asignatura_id: AsignaturaParaEliminar,
+        alumno_id: numeroEstudiante
+      };
+  
+      const response = await fetch("http://127.0.0.1:8000/api/eliminar_inscripcion/", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+  
+      if (response.ok) {
+        console.log("Datos eliminados con éxito:");
+      } else {
+        console.error("Error al eliminar los datos:");
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
     }
+
+    estudianteId();
   };
 
   const registrarHorario = async (e) => {
@@ -169,6 +260,7 @@ const Horario = () => {
         setExito('Enviado con exito');
         console.log("Datos enviados con éxito:", await response.json());
       } else {
+        setError('La Materia se superpone con otra');
         console.error("Error al enviar los datos:", response.status);
       }
     } catch (error) {
@@ -279,6 +371,7 @@ const Horario = () => {
                             7 + asignaturaSeleccionada.fila
                           }:00 - ${8 + asignaturaSeleccionada.fila}:00`
                         );
+                        Eliminar(asignaturaSeleccionada.nombre);
                       }
                     }}
                   >
@@ -309,9 +402,9 @@ const Horario = () => {
       className="form-select selectl"
       id="asignatura"
       value={asignatura}
-      size={size} // Controlamos dinámicamente el tamaño
-      onFocus={() => setSize(4)} // Cambiamos el tamaño al desplegar
-      onBlur={() => setSize(1)} // Restauramos el tamaño al cerrar
+      size={size}
+      onFocus={() => setSize(4)} 
+      onBlur={() => setSize(1)} 
       onChange={(e) => handleSelection(e)}
     >
       <option value="">Selecciona una asignatura</option>
@@ -389,15 +482,21 @@ const Horario = () => {
       </div>
     )}
 
-          <button onClick={registrarHorario}>Registrar Asignatura</button>
-          <button onClick={estudianteId}>Actualizar Horario</button>
+          <button onClick={getHorariosDisponibles} className='boton_registrar'>Consultar horarios</button>
+          <button onClick={estudianteId} className='refrescar'>Refrescar Horario</button>
+          <button onClick={registrarHorario} className='actualizar'>
+            Registrar Horarios
+          </button>
 
         </form>
       </div>
 
       {error && (
         <div className="error">
-          <span>{error}</span>
+          La Materia se superpone con otra
+        <span className="icono-x" onClick={cerrarAnuncio}>
+            X
+        </span>
         </div>
       )}
 
@@ -415,7 +514,17 @@ const Horario = () => {
         <button onClick={handleEliminar}>Eliminar</button>
       </div>
 
+      <div className="asignatura-cuadro">
+      <p><strong>Nombre:</strong> {nombreAsignatura}</p>
+      <p><strong>Docente:</strong> {nombreDocente}</p>
+      <p><strong>Día:</strong> {dia}</p>
+      <p><strong>Hora de inicio:</strong> {horaInicioH}</p>
+      <p><strong>Hora de fin:</strong> {horaFinH}</p>
+      </div>
+
+
     </div>
+    
   );
 };
 
